@@ -1,3 +1,3 @@
-module github.com/CranePeng/fenv-midware
+module github.com/CranePeng/fenv-middleware
 
 go 1.17
