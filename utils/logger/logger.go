@@ -76,12 +76,15 @@ func New(c Config) Interface {
 	logrusInstance.SetOutput(os.Stdout)
 	logrusInstance.SetReportCaller(false)
 	if c.CreateFile {
-		logFileName := path.Join(DefaultLogPath, DefaultLogFile)
+		if len(c.LogFile) == 0 {
+			c.LogFile = DefaultLogFile
+		}
+		if len(c.LogPath) == 0 {
+			c.LogFile = DefaultLogPath
+		}
+		logFileName := path.Join(c.LogPath, c.LogFile)
 		rotationCount := DefaultRotationCount
 		rotationTime := DefaultRotationTime
-		if len(c.LogPath) > 0 && len(c.LogFile) > 0 {
-			logFileName = path.Join(c.LogPath, c.LogFile)
-		}
 		if c.RotationCount > 0 {
 			rotationCount = c.RotationCount
 		}
