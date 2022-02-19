@@ -1,4 +1,4 @@
-package utils
+package common
 
 import (
 	"log"
@@ -10,7 +10,7 @@ import (
 )
 
 // 最终方案-全兼容
-func getCurrentAbPath() string {
+func GetCurrentAbPath() string {
 	dir := getCurrentAbPathByExecutable()
 	tmpDir, _ := filepath.EvalSymlinks(os.TempDir())
 	if strings.Contains(dir, tmpDir) {
