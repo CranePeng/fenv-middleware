@@ -11,4 +11,5 @@ func TestLogDemo(t *testing.T) {
 	log := logger.New(conf)
 	log.Info(conf.Ctx, "测试 %v", "asf")
 	log.Debug(conf.Ctx, "测试")
+	log.Warn(conf.Ctx, "测试")
 }
