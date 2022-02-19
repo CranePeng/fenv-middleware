@@ -3,8 +3,8 @@ package common
 import (
 	"log"
 	"os"
-	"path"
-	"path/filepath"
+	p "path"
+	pf "path/filepath"
 	"runtime"
 	"strings"
 )
@@ -12,7 +12,7 @@ import (
 // 最终方案-全兼容
 func GetCurrentAbPath() string {
 	dir := getCurrentAbPathByExecutable()
-	tmpDir, _ := filepath.EvalSymlinks(os.TempDir())
+	tmpDir, _ := pf.EvalSymlinks(os.TempDir())
 	if strings.Contains(dir, tmpDir) {
 		return getCurrentAbPathByCaller()
 	}
@@ -25,7 +25,7 @@ func getCurrentAbPathByExecutable() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, _ := filepath.EvalSymlinks(filepath.Dir(exePath))
+	res, _ := pf.EvalSymlinks(pf.Dir(exePath))
 	return res
 }
 
@@ -34,7 +34,7 @@ func getCurrentAbPathByCaller() string {
 	var abPath string
 	_, filename, _, ok := runtime.Caller(0)
 	if ok {
-		abPath = path.Dir(filename)
+		abPath = p.Dir(filename)
 	}
 	return abPath
 }
