@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	rotateLogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
@@ -9,6 +10,8 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -44,6 +47,8 @@ type (
 		Info(context.Context, string, ...interface{})
 		Warn(context.Context, string, ...interface{})
 		Error(context.Context, string, ...interface{})
+		//SetFormat(format *nested.Formatter)
+		//WithField(fields logrus.Fields)
 	}
 
 	Config struct {
@@ -80,7 +85,7 @@ func New(c Config) Interface {
 			c.LogFile = DefaultLogFile
 		}
 		if len(c.LogPath) == 0 {
-			c.LogFile = DefaultLogPath
+			c.LogPath = DefaultLogPath
 		}
 		logFileName := path.Join(c.LogPath, c.LogFile)
 		rotationCount := DefaultRotationCount
@@ -100,11 +105,21 @@ func New(c Config) Interface {
 		)
 		mv := io.MultiWriter(os.Stdout, w)
 		logrusInstance.SetOutput(mv)
-		logrusInstance.SetFormatter(&nested.Formatter{
-			HideKeys:        true,
-			NoColors:        true,
-			TimestampFormat: "2006-01-02 15:04:05",
-		})
+		logrusInstance.SetFormatter(
+			&nested.Formatter{
+				HideKeys:        true,
+				NoColors:        true,
+				TimestampFormat: "2006-01-02 15:04:05",
+				CallerFirst:     true,
+				CustomCallerFormatter: func(frame *runtime.Frame) string {
+					funcInfo := runtime.FuncForPC(frame.PC)
+					if funcInfo == nil {
+						return "error during runtime.FuncForPC"
+					}
+					fullPath, line := funcInfo.FileLine(frame.PC)
+					return fmt.Sprintf(" [%v:%v] ", filepath.Base(fullPath), line)
+				},
+			})
 	}
 	w := writer{logrusInstance}
 	fl := &fenvLogger{
@@ -132,6 +147,8 @@ func (f *fenvLogger) LogMode(level LogLevel) {
 		f.instance.SetLevel(logrus.WarnLevel)
 	case Error:
 		f.instance.SetLevel(logrus.ErrorLevel)
+	case Trace:
+		f.instance.SetLevel(logrus.TraceLevel)
 	default:
 		f.instance.SetLevel(logrus.InfoLevel)
 	}
@@ -171,6 +188,15 @@ func (f fenvLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	}
 }
 
+// 后续再优化：https://darjun.github.io/2020/02/07/godailylib/logrus/ 自定义属性格式
+/*func (f fenvLogger)WithField(field logrus.Fields) {
+	f.instance.WithFields(field)
+}*/
+// 参考 https://www.codeleading.com/article/82454852589/
+/*func (f fenvLogger)SetFormat(format *nested.Formatter){
+	f.instance.SetFormatter(format)
+}*/
+
 func (w *writer) print(level LogLevel, msg string, args ...interface{}) {
 	switch level {
 	case Debug:
@@ -180,7 +206,9 @@ func (w *writer) print(level LogLevel, msg string, args ...interface{}) {
 	case Warn:
 		w.instance.Warnf(msg, args)
 	case Error:
-		w.instance.Error(msg, args)
+		w.instance.Errorf(msg, args)
+	case Trace:
+		w.instance.Tracef(msg, args)
 	default:
 		w.instance.Print(msg, args)
 	}

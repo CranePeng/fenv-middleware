@@ -1,6 +1,8 @@
 package midwares
 
-import "log"
+import (
+	"log"
+)
 
 func Url() func(c *SliceRouterContext) {
 	return func(c *SliceRouterContext) {
